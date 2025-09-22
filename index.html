@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>DevOps & AWS — 3D Landing</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg1: #0f172a;
+      --bg2: #071428;
+      --accent: #00ffd5;
+      --accent-2: #7c4dff;
+      --glass: rgba(255,255,255,0.06);
+      --card: rgba(255,255,255,0.04);
+      --glass-border: rgba(255,255,255,0.06);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:'Poppins',system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#e6f0ff}
+    body{
+      background: radial-gradient(1200px 600px at 10% 20%, rgba(124,77,255,0.12), transparent),
+                  radial-gradient(900px 500px at 90% 80%, rgba(0,255,213,0.06), transparent),
+                  linear-gradient(180deg,var(--bg1),var(--bg2));
+      overflow:hidden;
+      perspective:1200px;
+    }
+
+    /* 3D layers (parallax) */
+    .scene{position:fixed;inset:0;pointer-events:none}
+    .layer{position:absolute;inset:0;transform-style:preserve-3d}
+
+    /* floating orbs */
+    .orb{
+      position:absolute;border-radius:50%;filter:blur(40px) contrast(120%);
+      transform:translateZ(0);
+      mix-blend-mode:screen;opacity:0.9
+    }
+    .orb.orb-a{width:520px;height:520px;left:-14%;top:8%;background:radial-gradient(circle at 30% 30%, rgba(124,77,255,0.95), rgba(124,77,255,0.25) 40%, transparent 60%)}
+    .orb.orb-b{width:420px;height:420px;right:-8%;bottom:-6%;background:radial-gradient(circle at 70% 70%, rgba(0,255,213,0.9), rgba(0,255,213,0.18) 40%, transparent 60%)}
+    .orb.orb-c{width:260px;height:260px;left:40%;top:10%;background:radial-gradient(circle at 50% 50%, rgba(255,120,90,0.85), rgba(255,120,90,0.12) 40%, transparent 60%)}
+
+    /* subtle animated grid on background */
+    .grid{
+      position: absolute;inset:0;opacity:0.06; background-image:linear-gradient(transparent 95%, rgba(255,255,255,0.06) 95%), linear-gradient(90deg, transparent 95%, rgba(255,255,255,0.06) 95%);
+      background-size:120px 120px;transform:translateZ(-300px) scale(1.4);
+      filter:contrast(120%);
+    }
+
+    header{
+      position:relative;padding:80px 8vw 40px;max-width:1200px;margin:0 auto;z-index:40;pointer-events:auto
+    }
+
+    .brand{
+      display:flex;align-items:center;gap:14px;margin-bottom:28px
+    }
+    .logo{
+      width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;font-weight:900;color:#041026;box-shadow:0 8px 30px rgba(124,77,255,0.18), 0 2px 8px rgba(0,255,213,0.06)
+    }
+    .brand h1{margin:0;font-size:18px;font-weight:700;letter-spacing:0.4px}
+    .brand p{margin:0;opacity:0.7;font-size:13px}
+
+    .hero{
+      display:flex;gap:40px;align-items:center;justify-content:space-between
+    }
+    .hero .left{flex:1;min-width:320px}
+    .hero .right{width:480px;max-width:46%;min-width:280px}
+
+    .title{
+      font-size:46px;line-height:1.02;margin:0 0 14px;padding-right:36px;font-weight:800;text-shadow:0 6px 30px rgba(0,0,0,0.6)}
+    .title .glow{display:inline-block;color:transparent;background:linear-gradient(90deg,var(--accent),var(--accent-2));-webkit-background-clip:text;background-clip:text}
+
+    /* neon underlines and typing */
+    .subtitle{margin:0 0 20px;color:#cfeff6;opacity:0.95}
+    .typing{display:inline-block;border-right:2px solid rgba(255,255,255,0.12);padding-right:6px;animation:blink 1s steps(2, start) infinite}
+    @keyframes blink{50%{border-color:transparent}}
+
+    .cta{display:flex;gap:12px;margin-top:18px}
+    .btn{background:linear-gradient(90deg,rgba(255,255,255,0.03), rgba(255,255,255,0.02));border:1px solid var(--glass-border);padding:12px 18px;border-radius:12px;color:inherit;text-decoration:none;font-weight:600;backdrop-filter:blur(6px);transition:transform .22s ease,box-shadow .22s}
+    .btn.primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#041026;box-shadow:0 8px 40px rgba(124,77,255,0.14)}
+    .btn:hover{transform:translateY(-6px)}
+
+    /* cards */
+    .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:36px}
+    .card{background:var(--card);padding:18px;border-radius:14px;border:1px solid rgba(255,255,255,0.04);min-height:130px;backdrop-filter:blur(6px);transition:transform .28s,box-shadow .28s;cursor:default}
+    .card:hover{transform:translateY(-8px);box-shadow:0 18px 50px rgba(2,6,23,0.6)}
+    .card h3{margin:0 0 8px;font-size:16px}
+    .card p{margin:0;opacity:0.85;font-size:13px;line-height:1.45}
+
+    /* right-side 3d panel */
+    .panel{height:420px;border-radius:16px;background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.04);display:flex;flex-direction:column;padding:18px;gap:12px;backdrop-filter:blur(8px);transform-style:preserve-3d}
+    .panel .mock-viewport{flex:1;border-radius:12px;background:linear-gradient(180deg, rgba(0,0,0,0.18), rgba(0,0,0,0.12));display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+    .panel .mock-viewport .rack{width:320px;height:220px;background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:10px;border:1px solid rgba(255,255,255,0.03);display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:12px}
+    .panel .mock-viewport .rack .slot{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:6px;box-shadow:inset 0 -6px 14px rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;font-weight:700}
+
+    /* footer */
+    footer{position:relative;padding:28px 8vw 60px;z-index:40}
+    .footer-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:20px}
+    .credits{opacity:0.7;font-size:13px}
+
+    /* small screens */
+    @media (max-width:900px){
+      .hero{flex-direction:column-reverse}
+      .panel{width:100%}
+      .cards{grid-template-columns:repeat(1,1fr)}
+      .title{font-size:34px}
+    }
+
+    /* animations */
+    @keyframes floatA{0%{transform:translateY(0) translateZ(-60px)}50%{transform:translateY(-28px) translateZ(-40px)}100%{transform:translateY(0) translateZ(-60px)}}
+    @keyframes floatB{0%{transform:translateY(0) translateZ(-200px)}50%{transform:translateY(32px) translateZ(-160px)}100%{transform:translateY(0) translateZ(-200px)}}
+    @keyframes floatC{0%{transform:translateY(0)}50%{transform:translateY(-18px)}100%{transform:translateY(0)}}
+
+    .orb.orb-a{animation:floatA 9s ease-in-out infinite}
+    .orb.orb-b{animation:floatB 12s ease-in-out infinite}
+    .orb.orb-c{animation:floatC 8s ease-in-out infinite}
+
+    /* small interactive hint */
+    .hint{margin-top:8px;font-size:13px;opacity:0.7}
+  </style>
+</head>
+<body>
+  <div class="scene" id="scene">
+    <div class="layer" data-depth="0.12">
+      <div class="orb orb-a"></div>
+      <div class="orb orb-b"></div>
+      <div class="orb orb-c"></div>
+    </div>
+    <div class="layer grid" data-depth="0.02"></div>
+  </div>
+
+  <header>
+    <div class="brand">
+      <div class="logo">DV</div>
+      <div>
+        <h1>DevOps & AWS Studio</h1>
+        <p>Bridging code, cloud, and resilience — automated, observable, repeatable.</p>
+      </div>
+    </div>
+
+    <section class="hero">
+      <div class="left">
+        <h2 class="title">Ship fast. Run safe. Scale smart. <span class="glow">DevOps & Infrastructure</span></h2>
+        <p class="subtitle">A compact tour of modern practices that make systems resilient and teams unstoppable. <span class="typing" id="typed"></span></p>
+
+        <div class="cta">
+          <a class="btn primary" href="#learn">Explore Playbook</a>
+          <a class="btn" href="#contact">Get In Touch</a>
+        </div>
+
+        <div class="cards" style="margin-top:28px;">
+          <div class="card">
+            <h3>CI / CD</h3>
+            <p>Automate builds, tests, and deploys. Keep feedback loops short with pipelines that enforce quality before production.</p>
+          </div>
+          <div class="card">
+            <h3>Infrastructure as Code</h3>
+            <p>Version-controlled, reviewable infrastructure — from Terraform to CloudFormation — repeatable across environments.</p>
+          </div>
+          <div class="card">
+            <h3>Observability</h3>
+            <p>Logs, metrics, and traces that answer "why" — enabling rapid incident response and continuous improvement.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="panel" id="panel">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div style="font-weight:700">Infra Rack</div>
+            <div style="font-size:13px;opacity:0.7">Live preview</div>
+          </div>
+          <div class="mock-viewport" id="viewport">
+            <div class="rack" id="rack">
+              <div class="slot">K8S</div>
+              <div class="slot">CI</div>
+              <div class="slot">DB</div>
+              <div class="slot">ansible</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center">
+            <div style="flex:1;font-size:13px;opacity:0.85">Realtime status — autoscale policies, alerts, and blue/green flags.</div>
+            <div style="display:flex;gap:8px">
+              <div class="btn" style="padding:10px 12px;font-size:13px">View Docs</div>
+              <div class="btn" style="padding:10px 12px;font-size:13px">Deploy</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </header>
+
+  <main style="position:relative;z-index:40;max-width:1200px;margin:0 auto;padding:0 8vw">
+    <section id="learn" style="margin-top:30px;padding:26px;border-radius:14px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03);backdrop-filter:blur(6px)">
+      <h3 style="margin:0 0 12px">DevOps Playbook (Snapshot)</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div style="padding:12px;border-radius:10px;background:rgba(0,0,0,0.12)">
+          <h4 style="margin:0 0 8px">1. Plan & Code</h4>
+          <p style="margin:0;font-size:13px;opacity:0.9">Feature branches, code reviews, and trunk-based strategies keep velocity high and risk low.</p>
+        </div>
+        <div style="padding:12px;border-radius:10px;background:rgba(0,0,0,0.12)">
+          <h4 style="margin:0 0 8px">2. Build & Test</h4>
+          <p style="margin:0;font-size:13px;opacity:0.9">Pipelines run fast unit, integration, and security checks — infrastructure tests included.</p>
+        </div>
+        <div style="padding:12px;border-radius:10px;background:rgba(0,0,0,0.12)">
+          <h4 style="margin:0 0 8px">3. Deploy</h4>
+          <p style="margin:0;font-size:13px;opacity:0.9">Canary and blue/green deploys reduce blast radius and let you validate in production safely.</p>
+        </div>
+        <div style="padding:12px;border-radius:10px;background:rgba(0,0,0,0.12)">
+          <h4 style="margin:0 0 8px">4. Observe & Learn</h4>
+          <p style="margin:0;font-size:13px;opacity:0.9">Set SLIs/SLOs, collect telemetry, and run blameless postmortems to close the loop.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+      <div class="credits">Made with ❤️ by Bharath Kumar — try moving your mouse around for parallax & tilt</div>
+      <div style="display:flex;gap:10px">
+        <a class="btn" href="https://bit.ly/3V3m2ny">Website</a>
+        <a class="btn" href="https://github.com/bharath1911kumar">GitHub</a>
+         <a class="btn" href="#">Back</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Typing effect (simple)
+    const phrases = ['CI/CD • IaC • Observability • SRE', 'Automate. Observe. Improve.', 'Containers, Cloud, and Chaos-tested systems']
+    let i=0, j=0, out='';
+    const typed = document.getElementById('typed');
+    function tick(){
+      const word = phrases[i];
+      if(j < word.length){ out += word[j++]; typed.textContent = out; setTimeout(tick, 44) }
+      else { setTimeout(()=>{ // pause then delete
+        const del = setInterval(()=>{ out = out.slice(0,-1); typed.textContent = out; if(out.length===0){ clearInterval(del); i=(i+1)%phrases.length; j=0; setTimeout(tick,200) } }, 35)
+      }, 1200)}
+    }
+    tick();
+
+    // Parallax effect based on mouse
+    const scene = document.getElementById('scene');
+    const layers = scene.querySelectorAll('.layer');
+    document.addEventListener('mousemove', (e)=>{
+      const cx = window.innerWidth/2, cy = window.innerHeight/2;
+      const dx = (e.clientX - cx)/cx; const dy = (e.clientY - cy)/cy;
+      layers.forEach(layer => {
+        const depth = parseFloat(layer.getAttribute('data-depth') || '0.05');
+        const tx = dx * 30 * depth; const ty = dy * 30 * depth;
+        layer.style.transform = `translate3d(${tx}px, ${ty}px, 0) rotateY(${dx*6*depth}deg) rotateX(${ -dy*6*depth }deg)`;
+      })
+
+      // tilt the main panel
+      const panel = document.getElementById('panel');
+      const px = dx*6, py = dy*-6; panel.style.transform = `rotateY(${px}deg) rotateX(${py}deg)`;
+    });
+
+    // Small rack animation
+    const rack = document.getElementById('rack');
+    setInterval(()=>{
+      const slots = rack.querySelectorAll('.slot');
+      slots.forEach((s,idx)=>{
+        s.style.opacity = 0.5 + Math.abs(Math.sin(Date.now()/800 + idx))*0.6;
+        s.style.transform = `translateY(${Math.sin(Date.now()/600 + idx)*6}px) scale(${0.98 + Math.abs(Math.cos(Date.now()/900 + idx))*0.02})`;
+      })
+    },80);
+
+    // touch support: on small screens, slightly move orbs by tilt
+    window.addEventListener('deviceorientation', (ev)=>{
+      const x = ev.gamma || 0; const y = ev.beta || 0;
+      document.querySelectorAll('.orb').forEach((o,idx)=>{
+        o.style.transform = `translate3d(${x*1.6*(idx+1)}px, ${y*1.2*(idx+1)}px, 0)`;
+      })
+    })
+  </script>
+</body>
+</html>
